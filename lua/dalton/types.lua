@@ -1,7 +1,7 @@
 --- @meta
 
---- @class ignition.task
+--- @class dalton.atom A simple task
 --- @field desc string Task description
 
---- @class ignition.opts
+--- @class dalton.opts
 --- @field tasks table?
