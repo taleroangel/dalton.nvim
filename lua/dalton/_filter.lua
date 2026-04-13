@@ -2,7 +2,7 @@
 local M = {}
 
 --- Check if a value is an Atom (+valid)
---- @param task dalton.atom|dalton.compound
+--- @param task dalton.Atom|dalton.Compound
 --- @return boolean
 ---     True if value is an Atom
 function M.is_atom(task)
@@ -10,7 +10,7 @@ function M.is_atom(task)
 end
 
 --- Check if a value is a Compound (+valid)
---- @param task dalton.atom|dalton.compound
+--- @param task dalton.Atom|dalton.Compound
 --- @return boolean
 ---     True if value is a Compound
 function M.is_compound(task)
@@ -18,7 +18,7 @@ function M.is_compound(task)
 end
 
 --- Check if Atom or a Compound matches a particular filetype
---- @param task dalton.atom|dalton.compound
+--- @param task dalton.Atom|dalton.Compound
 --- @param ft string? Filetype to match, use nil match tasks without a filetype
 function M.has_ft(task, ft)
     ---@type (string|string[])?

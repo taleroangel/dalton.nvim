@@ -3,9 +3,10 @@ local M = {}
 
 --- Filter values from a table (and keep their keys)
 ---
---- @param tbl table Key-value table to filter
---- @param predicate function Function(k, v): boolean
---- @return table
+--- @generic K, V
+--- @param tbl table<K, V> Key-value table to filter
+--- @param predicate fun(k: K, v: V): boolean Returns true to keep element
+--- @return table<K, V>
 ---     Table without filtered values
 function M.tbl_kfilter(tbl, predicate)
     local result = {}
