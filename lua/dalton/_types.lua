@@ -8,7 +8,9 @@
 ---     An Atom is the fundamental unit of work (an unit task).
 ---     It represents a single, named, executable task - a command or function
 ---     that does exactly one thing.
---- @field cmd string|string[] Command to run, or a list of arguments
+--- @field cmd string[]|string
+---     List of command arguments (prefered) or a string with the full command.
+---     If a string is provided, the command is wrapped around the system shell
 --- @field cwd string? Working directory, defaults to the project root
 --- @field env table<string, string|number>? Environment variables as key-value pairs
 

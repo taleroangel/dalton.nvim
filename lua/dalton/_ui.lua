@@ -70,7 +70,7 @@ end
 --- @param name string Compound name
 --- @param time number Time it took the process to finish (in ms)
 --- @param atom string Failed atom name
-function M.compound_bail(name, time, atom)
+function M.compound_failure(name, time, atom)
     vim.notify(
         ("Compound `" .. name .. "` failed at atom `" .. atom .. "`. (Took " .. time .. "ms)"),
         vim.log.levels.ERROR,

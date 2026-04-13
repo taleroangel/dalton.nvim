@@ -34,4 +34,35 @@ function M.has_ft(task, ft)
     return false
 end
 
+--- Check if a task is compatible with the current buffer's filetype
+---
+--- @param task dalton.Atom|dalton.Compound
+function M.is_valid_for_current_buffer(task)
+    return M.has_ft(task, nil) or M.has_ft(task, vim.bo.ft)
+end
+
+--- Filter tasks given a particular mode
+---
+--- @param task dalton.Atom|dalton.Compound
+--- @param mode dalton.type.pick
+function M.filter_for_mode(task, mode)
+    return ({
+        default = function(v)
+            return M.is_valid_for_current_buffer(v)
+        end,
+        atom = function(v)
+            return M.is_valid_for_current_buffer(v) and M.is_atom(v)
+        end,
+        compound = function(v)
+            return M.is_valid_for_current_buffer(v) and M.is_compound(v)
+        end,
+        ft = function(v)
+            return M.has_ft(v, vim.bo.ft)
+        end,
+        all = function(_)
+            return true
+        end,
+    })[mode](task)
+end
+
 return M
