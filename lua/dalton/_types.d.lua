@@ -1,4 +1,4 @@
---- @meta
+--- @meta dalton
 
 --- @class (abstract) dalton.Task Common fields to both `atoms` and `compounds`
 --- @field desc string? Task description
@@ -14,6 +14,16 @@
 --- @field cwd string? Working directory, defaults to the project root
 --- @field env table<string, string|number>? Environment variables as key-value pairs
 
+--- @alias dalton.AtomShortcut string
+---     A simpler way of declaring an Atom, just a string with the command
+---     to be run.
+---
+---     Equivalent Atom: { cmd = <value>, cwd = nil, env = nil }
+---
+---     i.e
+---         dalton.atom("build", { cmd = "make build" })
+---         dalton.atom("build", "make build")
+
 --- @class dalton.Compound: dalton.Task
 ---     A Compound is an ordered composition of Atoms (a composite task).
 ---     It represents a multi-step workflow where each step is a
@@ -21,17 +31,26 @@
 --- @field steps string[]
 ---     Ordered list of Atom names to execute sequentially, the Atoms must
 ---     exist when the Compound is ran, you can define not yet existant Atoms.
---- @field bail boolean? Abort on first failure, defaults to true
+--- @field bail boolean? Abort on first failure, defaults to true.
 
---- @class dalton.Opts
----     Global configuration for Dalton.
----     Atoms and Compounds defined here are available across all projects
----     and filetypes, unless scoped with the `ft` field.
---- @field atoms table<string, dalton.Atom>? Global Atom definitions, keyed by name
---- @field compounds table<string, dalton.Compound>? Global Compound definitions, keyed by name
+--- @alias dalton.CompoundShortcut string[]
+---     A simpler way of declaring a Compound, just a list of strings with the
+---     steps of the Compound.
+---
+---     Equivalent Compound: { steps = <value>, bail = true }
+---
+---     i.e
+---         dalton.compound("foobar", { steps = ["foo", "bar"] } )
+---         dalton.compound("foobar", ["foo", "bar"])
 
 --- @alias dalton.list table<string, dalton.Atom|dalton.Compound>
 ---     List of tasks associated by their name
+
+--- @alias dalton.any dalton.Atom|dalton.AtomShortcut|dalton.Compound|dalton.CompoundShortcut
+---     Any Dalton variant, either an Atom or a Compound including their shortcut variants
+
+--- @alias dalton.list.any table<string, dalton.Atom|dalton.AtomShortcut|dalton.Compound|dalton.CompoundShortcut>
+---     List of tasks associated by their name (with their shortcut variants)
 
 --- @alias dalton.type "atom"|"compound"
 ---     Atom or Compound type string

@@ -1,3 +1,4 @@
+--- @package Module for handling command execution
 local M = {}
 
 --- Wrap a command in a system shell call
@@ -10,7 +11,7 @@ local function wrap_for_shell(cmd)
         vim.o.shell,
         -- Command argument (-c or Unix, /c on Windows cmd or -Command on Windows Powershell)
         ({
-            ["Linux"] = vim.o.shell, "-c",
+            ["Linux"] = "-c",
             ["Darwin"] = "-c",
             ["Windows_NT"] = (vim.o.shell:find("pwsh") or vim.o.shell:find("powershell")) and "-Command" or "/c",
         })[vim.uv.os_uname().sysname],
@@ -36,12 +37,12 @@ function M.exec(atom)
     local cwd = atom.cwd and vim.fs.normalize(atom.cwd) or vim.fn.getcwd()
     local env = atom.env and vim.tbl_extend("force", vim.fn.environ(), atom.env) or nil
 
-    -- Create process (sync/blocking)
-    local proc = vim.system(cmd, { cwd = cwd, env = env, }, nil)
-
     -- Call execution, measure time
     local stime = vim.uv.now()
-    local success, result = pcall(proc.wait, proc)
+    local success, result = pcall(function()
+        -- Create process (sync/blocking)
+        return vim.system(cmd, { cwd = cwd, env = env, }, nil):wait()
+    end)
     local delta = vim.uv.now() - stime
 
     return success, delta, result

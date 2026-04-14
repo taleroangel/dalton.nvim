@@ -1,9 +1,9 @@
+--- @package Module for handling access to the global list of tasks
+local M = {}
+
 --- Global list of tasks (both Atoms and Compounds)
 --- @type dalton.list
 local g_tasks = {}
-
---- @package
-local M = {}
 
 --- Replace all tasks
 --- @param items dalton.list

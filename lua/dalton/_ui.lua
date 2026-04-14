@@ -1,19 +1,19 @@
 local M = {}
 
 --- Additional parameters for notificacionts
-local NOTIFICATION_PARAMS = {
-    title = "Dalton.nvim",
-    ft = "markdown",        -- folke/snacks.nvim (snacks.notify)
-    on_open = function(win) -- rcarriga/nvim-notify
-        local bufnr = vim.api.nvim_win_get_buf(win)
-        vim.api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
-    end
-}
+--- @return table
+local NOTIFICATION_PARAMS = function()
+    return {
+        id = vim.uv.now(), -- Assign unique timestamp
+        title = "Dalton.nvim",
+        ft = "markdown",   -- folke/snacks.nvim (snacks.notify)
+    }
+end
 
 --- Notify a task just started
 --- @param name string Task name
 function M.task_notify(name)
-    vim.notify("Task `" .. name .. "` started", vim.log.levels.INFO, NOTIFICATION_PARAMS)
+    vim.notify("Task `" .. name .. "` started", vim.log.levels.INFO, NOTIFICATION_PARAMS())
 end
 
 --- Notify Atom success
@@ -25,7 +25,7 @@ function M.atom_success(name, time, stdout)
         ("Atom `" .. name .. "` finished successfully. (Took " .. time .. "ms)\n") ..
         (stdout or ""),
         vim.log.levels.INFO,
-        NOTIFICATION_PARAMS
+        NOTIFICATION_PARAMS()
     )
 end
 
@@ -38,7 +38,7 @@ function M.atom_failure(name, time, code, stderr)
     vim.notify(
         ("Atom `" .. name .. "` failed with code (" .. code .. "). (Took " .. time .. "ms)\n" .. stderr),
         vim.log.levels.ERROR,
-        NOTIFICATION_PARAMS
+        NOTIFICATION_PARAMS()
     )
 end
 
@@ -50,7 +50,7 @@ function M.atom_error(name, time, error)
     vim.notify(
         ("Atom `" .. name .. "` failed. (Took " .. time .. "ms)\n:" .. error),
         vim.log.levels.ERROR,
-        NOTIFICATION_PARAMS
+        NOTIFICATION_PARAMS()
     )
 end
 
@@ -62,7 +62,7 @@ function M.compound_success(name, time, steps)
     vim.notify(
         ("Compound `" .. name .. "` finished successfully after " .. steps .. " steps. (Took " .. time .. "ms)"),
         vim.log.levels.INFO,
-        NOTIFICATION_PARAMS
+        NOTIFICATION_PARAMS()
     )
 end
 
@@ -74,7 +74,7 @@ function M.compound_failure(name, time, atom)
     vim.notify(
         ("Compound `" .. name .. "` failed at atom `" .. atom .. "`. (Took " .. time .. "ms)"),
         vim.log.levels.ERROR,
-        NOTIFICATION_PARAMS
+        NOTIFICATION_PARAMS()
     )
 end
 
