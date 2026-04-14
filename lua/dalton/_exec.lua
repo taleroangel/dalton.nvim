@@ -23,29 +23,23 @@ end
 --- Run an atom
 --- Wrapper around `vim.system`
 ---
---- Call this from a coroutine
+--- Call from a coroutine!
 ---
 --- @param atom dalton.Atom
---- @return boolean success, number time, vim.SystemCompleted|string results
----     If 'success'is false, 'results' contains a string with the error
----     message, `vim.SystemCompleted` is returned otherwise
+--- @return vim.SystemCompleted
 function M.exec(atom)
+    local co = coroutine.running()
     -- Split cmd into a list of arguments
     ---@diagnostic disable-next-line: param-type-mismatch
     local cmd = (type(atom.cmd) == "string") and wrap_for_shell(atom.cmd) or atom.cmd
     ---@cast cmd string[]
     local cwd = atom.cwd and vim.fs.normalize(atom.cwd) or vim.fn.getcwd()
     local env = atom.env and vim.tbl_extend("force", vim.fn.environ(), atom.env) or nil
-
-    -- Call execution, measure time
-    local stime = vim.uv.now()
-    local success, result = pcall(function()
-        -- Create process (sync/blocking)
-        return vim.system(cmd, { cwd = cwd, env = env, }, nil):wait()
+    -- Create process (sync/blocking)
+    vim.system(cmd, { cwd = cwd, env = env }, function(obj)
+        coroutine.resume(co, obj)
     end)
-    local delta = vim.uv.now() - stime
-
-    return success, delta, result
+    return coroutine.yield()
 end
 
 return M

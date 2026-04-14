@@ -191,7 +191,10 @@ local function run_atom(name, atom, verbose)
     if (verbose) then ui.task_notify(name) end
 
     -- Run atom
-    local success, time, obj = exec(atom)
+    local stime = vim.uv.now()
+    ---@type boolean, vim.SystemCompleted|string
+    local success, obj = pcall(exec, atom)
+    local time = vim.uv.now() - stime
     local fail = (not success) or (obj.code ~= 0) or (obj.signal ~= 0)
 
     if (not success) then
@@ -210,57 +213,59 @@ end
 --- @param name string Unique identifier for the task
 --- @param opts dalton.run.Opts? Run options
 function M.run(name, opts)
-    opts = vim.tbl_deep_extend("keep", opts or {}, RUN_DEFAULTS)
-    ---@cast opts dalton.run.Opts
+    coroutine.wrap(function()
+        opts = vim.tbl_deep_extend("keep", opts or {}, RUN_DEFAULTS)
+        ---@cast opts dalton.run.Opts
 
-    -- Get task and check that it exists
-    local task = require("dalton._tasks").get(name)
-    if (task == nil) then
-        error("No such task `" .. name .. "`")
-    end
-
-    local filters = require("dalton._helper")
-    local ui = require("dalton._ui")
-
-    -- Create coroutine to avoid blocking the UI
-    local co = coroutine.create(function()
-        -- Run the actual atom
-        if (filters.is_atom(task)) then
-            ---@cast task dalton.Atom
-            run_atom(name, task, opts.verbose)
-        elseif (filters.is_compound(task)) then
-            ---@cast task dalton.Compound
-            local err = false
-            local stime = vim.uv.now()
-            -- For each Atom in steps (important to keep it in order)
-            for _, atom_name in ipairs(task.steps) do
-                -- Get task and cast it to Atom
-                local atom = require("dalton._tasks").get(atom_name)
-                ---@cast atom dalton.Atom
-                if (atom == nil or (not filters.is_atom(atom))) then
-                    error("Compound `" .. name .. "` references an invalid task `" .. atom_name .. "`")
-                end
-                -- Run single atom
-                local success = run_atom(atom_name, atom, opts.verbose)
-                if ((not success) and task.bail) then
-                    local delta = vim.uv.now() - stime
-                    ui.compound_failure(name, delta, atom_name)
-                    break -- Stop execution
-                end
-            end
-            -- Show results
-            if (not err) then
-                local delta = vim.uv.now() - stime
-                ui.compound_success(name, delta, #task.steps)
-            end
+        -- Get task and check that it exists
+        local task = require("dalton._tasks").get(name)
+        if (task == nil) then
+            error("No such task `" .. name .. "`")
         end
-    end)
 
-    -- Init coroutine and check errors
-    local success, err = coroutine.resume(co)
-    if (not success) then
-        error(err)
-    end
+        local filters = require("dalton._helper")
+        local ui = require("dalton._ui")
+
+        -- Create coroutine to avoid blocking the UI
+        local co = coroutine.create(function()
+            -- Run the actual atom
+            if (filters.is_atom(task)) then
+                ---@cast task dalton.Atom
+                run_atom(name, task, opts.verbose)
+            elseif (filters.is_compound(task)) then
+                ---@cast task dalton.Compound
+                local err = false
+                local stime = vim.uv.now()
+                -- For each Atom in steps (important to keep it in order)
+                for _, atom_name in ipairs(task.steps) do
+                    -- Get task and cast it to Atom
+                    local atom = require("dalton._tasks").get(atom_name)
+                    ---@cast atom dalton.Atom
+                    if (atom == nil or (not filters.is_atom(atom))) then
+                        error("Compound `" .. name .. "` references an invalid task `" .. atom_name .. "`")
+                    end
+                    -- Run single atom
+                    local success = run_atom(atom_name, atom, opts.verbose)
+                    if ((not success) and task.bail) then
+                        local delta = vim.uv.now() - stime
+                        ui.compound_failure(name, delta, atom_name)
+                        break -- Stop execution
+                    end
+                end
+                -- Show results
+                if (not err) then
+                    local delta = vim.uv.now() - stime
+                    ui.compound_success(name, delta, #task.steps)
+                end
+            end
+        end)
+
+        -- Init coroutine and check errors
+        local success, err = coroutine.resume(co)
+        if (not success) then
+            error(err)
+        end
+    end)()
 end
 
 --- Pick a task to run
