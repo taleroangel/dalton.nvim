@@ -180,92 +180,89 @@ local RUN_DEFAULTS = {
     verbose = false
 }
 
---- Run a single Atom
---- @param name string Atom name
---- @param atom dalton.Atom Atom definition
---- @param verbose boolean Show STDOUT output
---- @return boolean success If Atom executed correctly
-local function run_atom(name, atom, verbose)
-    local exec = require("dalton._exec").exec
-    local ui = require("dalton._ui")
-    if (verbose) then ui.task_notify(name) end
-
-    -- Run atom
-    local stime = vim.uv.now()
-    ---@type boolean, vim.SystemCompleted|string
-    local success, obj = pcall(exec, atom)
-    local time = vim.uv.now() - stime
-    local fail = (not success) or (obj.code ~= 0) or (obj.signal ~= 0)
-
-    if (not success) then
-        ---@cast obj string
-        ui.atom_error(name, time, obj)
-    elseif (fail) then
-        ui.atom_failure(name, time, obj.code, obj.stderr)
-    else
-        ui.atom_success(name, time, (verbose and obj.stdout or nil))
-    end
-    return (not fail)
-end
-
 --- Execute a task (either an Atom or a Compound) given it's name
 ---
 --- @param name string Unique identifier for the task
 --- @param opts dalton.run.Opts? Run options
 function M.run(name, opts)
-    coroutine.wrap(function()
-        opts = vim.tbl_deep_extend("keep", opts or {}, RUN_DEFAULTS)
-        ---@cast opts dalton.run.Opts
+    -- Get parameters
+    opts = vim.tbl_deep_extend("keep", opts or {}, RUN_DEFAULTS)
+    ---@cast opts dalton.run.Opts
 
+    -- Include required libraries
+    local utils = require("dalton._utils")
+    local filters = require("dalton._helper")
+    local ui = require("dalton._ui")
+    local get = require("dalton._tasks").get
+    local exec = require("dalton._exec")
+
+    ---Execute an Atom and trigger UI alerts
+    ---@param key string Atom name
+    ---@param atom dalton.Atom Atom definition
+    ---@return boolean success True if process completed successfully
+    local run = function(key, atom)
+        if (opts.verbose) then
+            ui.task_notify(key)
+        end
+        return utils.await(function(resume)
+            exec(atom,
+                -- on_success
+                function(time, stdout)
+                    ui.atom_success(key, time, opts.verbose and stdout or nil)
+                    resume(true)
+                end,
+                -- on_failure
+                function(time, code, stderr)
+                    ui.atom_failure(key, time, code, stderr)
+                    resume(false)
+                end,
+                -- on_error
+                function(what)
+                    ui.atom_error(key, what)
+                    resume(false)
+                end)
+        end)
+    end
+
+    -- Run async to avoid commands to block nvim
+    utils.async(function()
         -- Get task and check that it exists
-        local task = require("dalton._tasks").get(name)
+        local task = get(name)
         if (task == nil) then
             error("No such task `" .. name .. "`")
         end
 
-        local filters = require("dalton._helper")
-        local ui = require("dalton._ui")
-
-        -- Create coroutine to avoid blocking the UI
-        local co = coroutine.create(function()
-            -- Run the actual atom
-            if (filters.is_atom(task)) then
-                ---@cast task dalton.Atom
-                run_atom(name, task, opts.verbose)
-            elseif (filters.is_compound(task)) then
-                ---@cast task dalton.Compound
-                local err = false
-                local stime = vim.uv.now()
-                -- For each Atom in steps (important to keep it in order)
-                for _, atom_name in ipairs(task.steps) do
-                    -- Get task and cast it to Atom
-                    local atom = require("dalton._tasks").get(atom_name)
-                    ---@cast atom dalton.Atom
-                    if (atom == nil or (not filters.is_atom(atom))) then
-                        error("Compound `" .. name .. "` references an invalid task `" .. atom_name .. "`")
-                    end
-                    -- Run single atom
-                    local success = run_atom(atom_name, atom, opts.verbose)
-                    if ((not success) and task.bail) then
-                        local delta = vim.uv.now() - stime
-                        ui.compound_failure(name, delta, atom_name)
-                        break -- Stop execution
-                    end
+        -- Run the actual atom
+        if (filters.is_atom(task)) then
+            ---@cast task dalton.Atom
+            run(name, task)
+        elseif (filters.is_compound(task)) then
+            ---@cast task dalton.Compound
+            local stime = vim.uv.now()
+            local err = false
+            -- For each Atom in steps (important to keep it in order)
+            for _, atom_name in ipairs(task.steps) do
+                -- Get task and cast it to Atom
+                local atom = get(atom_name)
+                ---@cast atom dalton.Atom
+                if (atom == nil or (not filters.is_atom(atom))) then
+                    error("Compound `" .. name .. "` references an invalid task `" .. atom_name .. "`")
                 end
-                -- Show results
-                if (not err) then
+                -- Run single atom
+                local success = run(atom_name, atom)
+                if ((not success) and task.bail) then
                     local delta = vim.uv.now() - stime
-                    ui.compound_success(name, delta, #task.steps)
+                    ui.compound_failure(name, delta, atom_name)
+                    break -- Stop execution
                 end
             end
-        end)
-
-        -- Init coroutine and check errors
-        local success, err = coroutine.resume(co)
-        if (not success) then
-            error(err)
+            -- Show results
+            if (not err) then
+                local delta = vim.uv.now() - stime
+                ui.compound_success(name, delta, #task.steps)
+            end
         end
-    end)()
+    end)
 end
 
 --- Pick a task to run
@@ -274,14 +271,20 @@ end
 ---     Choose which tasks are going to be shown, if nil use 'default'
 --- @param opts dalton.run.Opts? Run options
 function M.pick(mode, opts)
-    coroutine.wrap(function()
+    local utils = require("dalton._utils")
+    utils.async(function()
         local tasks = M.list(mode)
-        local key = require("dalton._ui").pick(tasks)
+        -- Await results
+        local key = utils.await(function(resume)
+            require("dalton._ui").pick(tasks, function(item)
+                resume(item)
+            end)
+        end)
         -- User might not have selected anything
         if (key) then
             M.run(key, opts)
         end
-    end)()
+    end)
 end
 
 return M

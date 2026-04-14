@@ -2,12 +2,10 @@ local M = {}
 
 --- Show a picker for a given list of tasks
 ---
---- Call from a coroutine!
----
 --- @param tasks dalton.list
---- @return string|nil key Key for the task selected
-function M.pick(tasks)
-    local co = coroutine.running()
+--- @param on_pick fun(name: string|nil)
+---     Callback function with picked value (or nil if user canceled operation)
+function M.pick(tasks, on_pick)
     vim.ui.select(vim.iter(tasks):totable(), {
         prompt = "Choose a Task to run",
         format_item = function(item)
@@ -17,9 +15,8 @@ function M.pick(tasks)
             return name .. (def.desc and (": " .. def.desc) or "")
         end
     }, function(item)
-        coroutine.resume(co, ((item ~= nil) and item[1] or nil))
+        on_pick((item ~= nil) and item[1] or nil)
     end)
-    return coroutine.yield()
 end
 
 --- Additional parameters for notificacionts
@@ -66,11 +63,10 @@ end
 
 --- Notify an Atom failed (not the command itself but the actual `vim.system` call)
 --- @param name string Atom name
---- @param time number Time it took the process to finish (in ms)
 --- @param error string Error thrown by lua
-function M.atom_error(name, time, error)
+function M.atom_error(name, error)
     vim.notify(
-        ("Atom `" .. name .. "` failed. (Took " .. time .. "ms)\n:" .. error),
+        ("Atom `" .. name .. "` failed.\n" .. error),
         vim.log.levels.ERROR,
         NOTIFICATION_PARAMS()
     )
