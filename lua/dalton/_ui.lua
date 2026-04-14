@@ -1,5 +1,27 @@
 local M = {}
 
+--- Show a picker for a given list of tasks
+---
+--- Call from a coroutine!
+---
+--- @param tasks dalton.list
+--- @return string|nil key Key for the task selected
+function M.pick(tasks)
+    local co = coroutine.running()
+    vim.ui.select(vim.iter(tasks):totable(), {
+        prompt = "Choose a Task to run",
+        format_item = function(item)
+            local name, def = (table.unpack or unpack)(item)
+            ---@cast name string
+            ---@cast def dalton.Task
+            return name .. (def.desc and (": " .. def.desc) or "")
+        end
+    }, function(item)
+        coroutine.resume(co, ((item ~= nil) and item[1] or nil))
+    end)
+    return coroutine.yield()
+end
+
 --- Additional parameters for notificacionts
 --- @return table
 local NOTIFICATION_PARAMS = function()

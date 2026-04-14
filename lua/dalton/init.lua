@@ -67,7 +67,7 @@ function M.compound(name, def)
         ---@cast def dalton.CompoundShortcut
         def = helper.to_compound(def)
     end
-   assert(helper.is_compound(def), "`" .. name .. "` is not a valid Compound")
+    assert(helper.is_compound(def), "`" .. name .. "` is not a valid Compound")
     ---@cast def dalton.Compound
     def = vim.tbl_extend("keep", def, TASK_DEFAULTS)
     def = vim.tbl_extend("keep", def, COMPOUND_DEFAULTS)
@@ -261,6 +261,22 @@ function M.run(name, opts)
     if (not success) then
         error(err)
     end
+end
+
+--- Pick a task to run
+---
+--- @param mode dalton.type.pick?
+---     Choose which tasks are going to be shown, if nil use 'default'
+--- @param opts dalton.run.Opts? Run options
+function M.pick(mode, opts)
+    coroutine.wrap(function()
+        local tasks = M.list(mode)
+        local key = require("dalton._ui").pick(tasks)
+        -- User might not have selected anything
+        if (key) then
+            M.run(key, opts)
+        end
+    end)()
 end
 
 return M
