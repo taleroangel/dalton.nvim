@@ -30,7 +30,7 @@ local TASK_DEFAULTS = {
 --- @param def dalton.Atom|dalton.AtomShortcut Atom definition
 function M.atom(name, def)
     local helper = require("dalton._core.helper")
-    if (helper.is_atom_shortcut(def)) then
+    if helper.is_atom_shortcut(def) then
         ---@cast def dalton.AtomShortcut
         def = helper.to_atom(def)
     end
@@ -63,7 +63,7 @@ local COMPOUND_DEFAULTS = {
 --- @param def dalton.Compound|dalton.CompoundShortcut Compound definition
 function M.compound(name, def)
     local helper = require("dalton._core.helper")
-    if (helper.is_compound_shortcut(def)) then
+    if helper.is_compound_shortcut(def) then
         ---@cast def dalton.CompoundShortcut
         def = helper.to_compound(def)
     end
@@ -89,7 +89,7 @@ M.composite = M.compound
 --- @param def dalton.any Atom, Compound or their shortcut variants
 function M.task(name, def)
     local helper = require("dalton._core.helper")
-    if (helper.is_atom_shortcut(def)) then
+    if helper.is_atom_shortcut(def) then
         ---@cast def dalton.AtomShortcut
         def = helper.to_atom(def)
     elseif (helper.is_compound_shortcut(def)) then
@@ -132,10 +132,10 @@ function M.add(def)
     local helper = require("dalton._core.helper")
     for k, v in pairs(def) do
         -- Expand shortcuts
-        if (helper.is_atom_shortcut(v)) then
+        if helper.is_atom_shortcut(v) then
             ---@cast v dalton.AtomShortcut
             v = helper.to_atom(v)
-        elseif (helper.is_compound_shortcut(v)) then
+        elseif helper.is_compound_shortcut(v) then
             ---@cast v dalton.CompoundShortcut
             v = helper.to_compound(v)
         end
@@ -233,10 +233,10 @@ function M.run(name, opts)
         end
 
         -- Run the actual atom
-        if (filters.is_atom(task)) then
+        if filters.is_atom(task) then
             ---@cast task dalton.Atom
             run(name, task)
-        elseif (filters.is_compound(task)) then
+        elseif filters.is_compound(task) then
             ---@cast task dalton.Compound
             local stime = vim.uv.now()
             local err = false

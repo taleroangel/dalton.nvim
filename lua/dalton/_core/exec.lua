@@ -47,7 +47,7 @@ local function exec(atom, on_success, on_failure, on_error)
         end
     end)
     --- Show error
-    if (not success) then
+    if not success then
         ---@cast obj string
         on_error(obj)
     end

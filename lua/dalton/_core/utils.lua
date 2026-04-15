@@ -27,7 +27,7 @@ end
 --- @return ... Parameters passed to `resume`
 function M.await(blocking)
     local co = coroutine.running()
-    if (not co) then
+    if not co then
         error("Cannot await from main thread!")
     end
     blocking(function(...)
@@ -44,7 +44,7 @@ end
 --- @param body function Code to run in a separate thread
 function M.async(body)
     local co = coroutine.running()
-    if (co == nil) then
+    if not co then
         coroutine.wrap(body)()
     else
         body()
