@@ -1,0 +1,209 @@
+*dalton.txt*  Simple task runner for Neovim
+
+Author: taleroangel <angelgotalero@outlook.com>
+License: MIT
+
+==============================================================================
+CONTENTS                                                          *dalton.nvim*
+
+1. Introduction..............................................|dalton-intro|
+2. Concepts..................................................|dalton-concepts|
+3. Installation..............................................|dalton-install|
+4. Configuration.............................................|dalton-config|
+5. API.......................................................|dalton-api|
+6. Types.....................................................|dalton-types|
+
+==============================================================================
+1. Introduction                                                  *dalton-intro*
+
+Dalton is a simple task runner for Neovim. It allows you to define and execute
+tasks (Atoms) or sequences of tasks (Compounds). Tasks can be restricted to
+specific filetypes and can be defined globally or per-project.
+
+==============================================================================
+2. Concepts                                                  *dalton-concepts*
+
+Atoms                                                          *dalton-atoms*
+An Atom is the fundamental unit of Dalton. It represents a single, named,
+executable task (a command or function).
+
+Compounds                                                   *dalton-compounds*
+A Compound is an ordered composition of Atoms. It represents a multi-step
+task where each step is a reference to a named Atom.
+
+==============================================================================
+3. Installation                                               *dalton-install*
+
+Using lazy.nvim:
+>lua
+    {
+        "taleroangel/dalton.nvim",
+        config = function()
+            -- Global tasks go here
+        end
+    }
+<
+==============================================================================
+4. Configuration                                              *dalton-config*
+
+Dalton was designed to be configured per-project using Neovim's `exrc`
+feature. By creating a `.nvim.lua` file in your project root, you can define
+tasks that are only available while working on that specific project.
+
+To enable this, add the following to your global `init.lua`:
+>lua
+    vim.o.exrc = true
+<
+Example `.nvim.lua` file:
+>lua
+    local dalton = require("dalton")
+
+    dalton.add({
+        -- Simple atom
+        build = "make build",
+        -- Detailed atom with context
+        test = { 
+            cmd = "make test", 
+            cwd = "./build",
+            ft = { "c", "cpp" } 
+        },
+        -- Compound (shortcut)
+        all = { "build", "test" }
+    })
+<
+You can also define global tasks in your main `init.lua` that will be
+available across all projects.
+==============================================================================
+5. API                                                            *dalton-api*
+
+dalton.atom({name}, {def})                                      *dalton.atom()*
+    Create a new atom.
+    {name} (string) Unique identifier for the atom.
+    {def} (|dalton.Atom| or |dalton.AtomShortcut|) Atom definition.
+
+    Example:
+    >lua
+        -- Atom declaration shortcut
+        dalton.atom("build", "cmake --build build")
+        -- Atom declaration without shortcut
+        dalton.atom("build", { cmd = "cmake --build build" })
+        -- 'cmd' as a List of arguments
+        dalton.atom("build", { cmd = { "cmake", "--build", "build" })
+<
+    Note: The first two declarations are equivalent (the first one is a
+    shortcut to the second one) and both warp the command in a call to
+    your system shell:
+        
+        `$SHELL -c "cmake --build build"`
+
+    the third one is different, it does not wrap the arguments into system
+    shell, it directly prompts your system to run:
+
+        `cmake --build build`
+
+
+dalton.unit({name}, {def})                                      *dalton.unit()*
+    Alias for |dalton.atom()|.
+
+dalton.compound({name}, {def})                              *dalton.compound()*
+    Create a new compound.
+    {name} (string) Unique identifier for the compound.
+    {def} (|dalton.Compound| or |dalton.CompoundShortcut|) Compound definition.
+
+    Example:
+    >lua
+        -- Compound declaration shortcut
+        dalton.compound("all", { "build", "test" })
+        -- Compound declaration without shortcut
+        dalton.compound("all", { steps = { "build", "test" }})
+<
+dalton.composite({name}, {def})                            *dalton.composite()*
+    Alias for |dalton.compound()|.
+
+dalton.task({name}, {def})                                      *dalton.task()*
+    Create either an Atom or a Compound, automatically detecting the type.
+    {name} (string) Unique identifier.
+    {def} (|dalton.any|) Atom, Compound or shortcut.
+
+    Example:
+    >lua
+        -- Create an Atom (shortcut)
+        dalton.task("build", "cmake --build build")
+        -- Create an Atom (no shortcut)
+        dalton.task("test", { cmd = "ctest", cwd = "./build" })
+        -- Create a Compound (shortcut)
+        dalton.task("all", { "build", "test" })
+<
+
+dalton.add({def})                                               *dalton.add()*
+    Create many atoms or compounds at once.
+    {def} (table) Key-value pairs of names and definitions.
+
+    Example:
+    >lua
+        dalton.add({
+            -- Atom (shortcut)
+            build = "cmake --build build",
+            -- Atom (no shortcut)
+            test = { cmd = "ctest", cwd = "./build" },
+            -- Compound (shortcut)
+            all = { "build", "test" },
+        })
+>
+
+dalton.delete({name})                                        *dalton.delete()*
+    Delete a task by name.
+
+dalton.list([{mode}])                                          *dalton.list()*
+    Get a list of available tasks.
+    {mode} (|dalton.type.pick|?) Selection mode, defaults to "default".
+
+dalton.run({name}, [{opts}])                                    *dalton.run()*
+    Execute a task by name.
+    {name} (string) Task identifier.
+    {opts} (|dalton.run.Opts|?) Run options.
+
+dalton.pick([{mode}], [{opts}])                                *dalton.pick()*
+    Open a UI to pick and run a task.
+    {mode} (|dalton.type.pick|?) Selection mode.
+    {opts} (|dalton.run.Opts|?) Run options.
+
+==============================================================================
+6. Types                                                       *dalton-types*
+
+dalton.Task                                                     *dalton.Task*
+    Common fields for both atoms and compounds.
+    - desc (string?) Task description.
+    - ft (string|string[]?) Filetype restriction.
+
+dalton.Atom                                                     *dalton.Atom*
+    Extends |dalton.Task|.
+    - cmd (string|string[]) Command to execute.
+    - cwd (string?) Working directory.
+    - env (table<string, string|number>?) Environment variables.
+
+dalton.AtomShortcut                                     *dalton.AtomShortcut*
+    A string representing the command to be run. `(string)`
+    Equivalent to Atom: `{ cmd = <value> }`
+
+dalton.Compound                                             *dalton.Compound*
+    Extends |dalton.Task|.
+    - steps (string[]) List of Atom names to execute.
+    - bail (boolean?) Abort on first failure, defaults to true.
+
+dalton.CompoundShortcut                             *dalton.CompoundShortcut*
+    A list of strings representing the steps of the compound. `(string[])`
+    Equivalent to Compound: `{ steps = <value> }`
+
+dalton.type.pick                                           *dalton.type.pick*
+    One of:
+    - "default"  Show tasks for current buffer.
+    - "atom"     Show all atoms for current buffer.
+    - "compound" Show all compounds for current buffer.
+    - "ft"       Show only tasks matching current buffer's filetype.
+    - "all"      Show every registered task.
+
+dalton.run.Opts                                             *dalton.run.Opts*
+    - verbose (boolean?) Show output and notifications, defaults to false.
+
+vim:tw=78:ts=8:ft=help:norl:
