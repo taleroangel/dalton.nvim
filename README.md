@@ -144,5 +144,7 @@ Very good alternatives that didn't quite fit my needs, but might fit yours.
 - **[nvimlaunch](https://github.com/hadishahpuri/nvimlaunch)**: File-based shell command manager
 
 ## 📚️ What's next?
-[ ] Allow tasks to run on project startup (`auto` flag)
-[ ] [nvim-dap](https://github.com/mfussenegger/nvim-dap) _preLaunchTask_ support.
+
+- [ ] Allow task names to have spaces (support for 'run' command)
+- [ ] Allow tasks to run on project startup (`auto` flag)
+- [ ] [nvim-dap](https://github.com/mfussenegger/nvim-dap) _preLaunchTask_ support.
