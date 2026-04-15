@@ -4,7 +4,7 @@
 --- @field desc string? Task description
 --- @field ft (string[]|string)? Restrict and Atom/Compound to the given filetypes
 
---- @class dalton.Atom: dalton.Task
+--- @class (exact) dalton.Atom: dalton.Task
 ---     An Atom is the fundamental unit of work (an unit task).
 ---     It represents a single, named, executable task - a command or function
 ---     that does exactly one thing.
@@ -24,7 +24,7 @@
 ---         dalton.atom("build", { cmd = "make build" })
 ---         dalton.atom("build", "make build")
 
---- @class dalton.Compound: dalton.Task
+--- @class (exact) dalton.Compound: dalton.Task
 ---     A Compound is an ordered composition of Atoms (a composite task).
 ---     It represents a multi-step workflow where each step is a
 ---     reference to a named Atom.
@@ -62,5 +62,5 @@
 ---| "ft" Show only tasks with current buffer's filetype
 ---| "all" Show every registered task, even if not available
 
---- @class dalton.run.Opts Run options
+--- @class (exact) dalton.run.Opts Run options
 --- @field verbose boolean? Show command execution notifications and output, defaults to false.

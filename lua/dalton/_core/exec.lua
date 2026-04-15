@@ -1,3 +1,5 @@
+--- @package Utilities for executing atoms
+
 --- Wrap a command in a system shell call
 ---
 --- @param cmd string
