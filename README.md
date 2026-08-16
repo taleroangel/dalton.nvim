@@ -147,4 +147,6 @@ Very good alternatives that didn't quite fit my needs, but might fit yours.
 
 - [ ] Allow task names to have spaces (support for 'run' command)
 - [ ] Allow tasks to run on project startup (`auto` flag)
-- [ ] [nvim-dap](https://github.com/mfussenegger/nvim-dap) _preLaunchTask_ support.
+- [ ] [nvim-dap](https://github.com/mfussenegger/nvim-dap) _preLaunchTask_ and _postDebugTask_ support.
+- [ ] Run tasks in floating terminal (sync mode)
+- [ ] Refactor `_core/ui.lua`, suggested by u/ehansen
