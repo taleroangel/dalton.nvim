@@ -11,8 +11,8 @@ local M = {}
 --- Default parameters for a task (either Atom or Compound)
 --- @type dalton.Task
 local TASK_DEFAULTS = {
-    desc = nil,
-    ft = nil,
+	desc = nil,
+	ft = nil,
 }
 
 --- Create a new atom.
@@ -29,15 +29,15 @@ local TASK_DEFAULTS = {
 --- @param name string Unique identifier for the atom (shared with compounds)
 --- @param def dalton.Atom|dalton.AtomShortcut Atom definition
 function M.atom(name, def)
-    local helper = require("dalton._core.helper")
-    if helper.is_atom_shortcut(def) then
-        ---@cast def dalton.AtomShortcut
-        def = helper.to_atom(def)
-    end
-    assert(helper.is_atom(def), "`" .. name .. "` is not a valid Atom")
-    ---@cast def dalton.Atom
-    def = vim.tbl_extend("keep", def, TASK_DEFAULTS)
-    require("dalton._core.tasks").append(name, def)
+	local helper = require("dalton._core.helper")
+	if helper.is_atom_shortcut(def) then
+		---@cast def dalton.AtomShortcut
+		def = helper.to_atom(def)
+	end
+	assert(helper.is_atom(def), "`" .. name .. "` is not a valid Atom")
+	---@cast def dalton.Atom
+	def = vim.tbl_extend("keep", def, TASK_DEFAULTS)
+	require("dalton._core.tasks").append(name, def)
 end
 
 --- Alias for `atom`
@@ -45,7 +45,7 @@ M.unit = M.atom
 
 --- Default parameters for a Compound
 local COMPOUND_DEFAULTS = {
-    bail = true,
+	bail = true,
 }
 
 --- Create a new compound
@@ -62,16 +62,16 @@ local COMPOUND_DEFAULTS = {
 --- @param name string Unique identifier for the Compound (shared with atoms)
 --- @param def dalton.Compound|dalton.CompoundShortcut Compound definition
 function M.compound(name, def)
-    local helper = require("dalton._core.helper")
-    if helper.is_compound_shortcut(def) then
-        ---@cast def dalton.CompoundShortcut
-        def = helper.to_compound(def)
-    end
-    assert(helper.is_compound(def), "`" .. name .. "` is not a valid Compound")
-    ---@cast def dalton.Compound
-    def = vim.tbl_extend("keep", def, TASK_DEFAULTS)
-    def = vim.tbl_extend("keep", def, COMPOUND_DEFAULTS)
-    require("dalton._core.tasks").append(name, def)
+	local helper = require("dalton._core.helper")
+	if helper.is_compound_shortcut(def) then
+		---@cast def dalton.CompoundShortcut
+		def = helper.to_compound(def)
+	end
+	assert(helper.is_compound(def), "`" .. name .. "` is not a valid Compound")
+	---@cast def dalton.Compound
+	def = vim.tbl_extend("keep", def, TASK_DEFAULTS)
+	def = vim.tbl_extend("keep", def, COMPOUND_DEFAULTS)
+	require("dalton._core.tasks").append(name, def)
 end
 
 --- Alias for `compound`
@@ -88,25 +88,25 @@ M.composite = M.compound
 --- @param name string Unique identifier
 --- @param def dalton.any Atom, Compound or their shortcut variants
 function M.task(name, def)
-    local helper = require("dalton._core.helper")
-    if helper.is_atom_shortcut(def) then
-        ---@cast def dalton.AtomShortcut
-        def = helper.to_atom(def)
-    elseif (helper.is_compound_shortcut(def)) then
-        ---@cast def dalton.CompoundShortcut
-        def = helper.to_compound(def)
-    end
+	local helper = require("dalton._core.helper")
+	if helper.is_atom_shortcut(def) then
+		---@cast def dalton.AtomShortcut
+		def = helper.to_atom(def)
+	elseif helper.is_compound_shortcut(def) then
+		---@cast def dalton.CompoundShortcut
+		def = helper.to_compound(def)
+	end
 
-    -- Delegate
-    if (helper.is_atom(def)) then
-        ---@cast def dalton.Atom
-        return M.atom(name, def)
-    elseif (helper.is_compound(def)) then
-        ---@cast def dalton.Compound
-        return M.compound(name, def)
-    else
-        error("Invalid task `" .. name .. "`. Neither an Atom nor a Composite")
-    end
+	-- Delegate
+	if helper.is_atom(def) then
+		---@cast def dalton.Atom
+		return M.atom(name, def)
+	elseif helper.is_compound(def) then
+		---@cast def dalton.Compound
+		return M.compound(name, def)
+	else
+		error("Invalid task `" .. name .. "`. Neither an Atom nor a Composite")
+	end
 end
 
 --- Create many atoms or compounds at once, the function will automatically
@@ -129,34 +129,37 @@ end
 --- @param def dalton.list.any
 ---     A list of Atoms (and, or) Compounds, keyed by name.
 function M.add(def)
-    local helper = require("dalton._core.helper")
-    for k, v in pairs(def) do
-        -- Expand shortcuts
-        if helper.is_atom_shortcut(v) then
-            ---@cast v dalton.AtomShortcut
-            v = helper.to_atom(v)
-        elseif helper.is_compound_shortcut(v) then
-            ---@cast v dalton.CompoundShortcut
-            v = helper.to_compound(v)
-        end
-        assert(helper.is_atom(v) or helper.is_compound(v), "Invalid entry `" .. k .. "`, neither an Atom nor a Compound")
-        ---@cast v dalton.Atom|dalton.Compound
-        v = vim.tbl_extend("keep", v, TASK_DEFAULTS)
-        if (helper.is_compound(v)) then
-            ---@cast v dalton.Compound
-            v = vim.tbl_extend("keep", v, COMPOUND_DEFAULTS)
-        end
-        -- Apply changes
-        def[k] = v
-    end
-    ---@cast def dalton.list
-    require("dalton._core.tasks").extend(def)
+	local helper = require("dalton._core.helper")
+	for k, v in pairs(def) do
+		-- Expand shortcuts
+		if helper.is_atom_shortcut(v) then
+			---@cast v dalton.AtomShortcut
+			v = helper.to_atom(v)
+		elseif helper.is_compound_shortcut(v) then
+			---@cast v dalton.CompoundShortcut
+			v = helper.to_compound(v)
+		end
+		assert(
+			helper.is_atom(v) or helper.is_compound(v),
+			"Invalid entry `" .. k .. "`, neither an Atom nor a Compound"
+		)
+		---@cast v dalton.Atom|dalton.Compound
+		v = vim.tbl_extend("keep", v, TASK_DEFAULTS)
+		if helper.is_compound(v) then
+			---@cast v dalton.Compound
+			v = vim.tbl_extend("keep", v, COMPOUND_DEFAULTS)
+		end
+		-- Apply changes
+		def[k] = v
+	end
+	---@cast def dalton.list
+	require("dalton._core.tasks").extend(def)
 end
 
 --- Delete a task by its name
 --- @param name string Atom or Compound unique name
 function M.delete(name)
-    require("dalton._core.tasks").delete(name)
+	require("dalton._core.tasks").delete(name)
 end
 
 --- Get a list of available tasks (both atoms and compounds)
@@ -166,18 +169,18 @@ end
 --- @return dalton.list
 ---     List of Atoms (and, or) Compounds, keyed by name.
 function M.list(mode)
-    mode = mode or "default"
-    local tasks = require("dalton._core.tasks").list()
-    --- Filter entries using validator
-    return require("dalton._core.utils").tbl_kfilter(tasks, function(_, task)
-        return require("dalton._core.helper").is_valid_for_mode(task, mode)
-    end)
+	mode = mode or "default"
+	local tasks = require("dalton._core.tasks").list()
+	--- Filter entries using validator
+	return require("dalton._core.utils").tbl_kfilter(tasks, function(_, task)
+		return require("dalton._core.helper").is_valid_for_mode(task, mode)
+	end)
 end
 
 --- Default options for run
 --- @type dalton.run.Opts
 local RUN_DEFAULTS = {
-    verbose = false
+	verbose = false,
 }
 
 --- Execute a task (either an Atom or a Compound) given it's name
@@ -185,84 +188,84 @@ local RUN_DEFAULTS = {
 --- @param name string Unique identifier for the task
 --- @param opts dalton.run.Opts? Run options
 function M.run(name, opts)
-    -- Get parameters
-    opts = vim.tbl_deep_extend("keep", opts or {}, RUN_DEFAULTS)
-    ---@cast opts dalton.run.Opts
+	-- Get parameters
+	opts = vim.tbl_deep_extend("keep", opts or {}, RUN_DEFAULTS)
+	---@cast opts dalton.run.Opts
 
-    -- Include required libraries
-    local utils = require("dalton._core.utils")
-    local filters = require("dalton._core.helper")
-    local ui = require("dalton._core.ui")
-    local get = require("dalton._core.tasks").get
-    local exec = require("dalton._core.exec")
+	-- Include required libraries
+	local utils = require("dalton._core.utils")
+	local filters = require("dalton._core.helper")
+	local ui = require("dalton._core.ui")
+	local get = require("dalton._core.tasks").get
+	local exec = require("dalton._core.exec")
 
-    ---Execute an Atom and trigger UI alerts
-    ---@param key string Atom name
-    ---@param atom dalton.Atom Atom definition
-    ---@return boolean success True if process completed successfully
-    local run = function(key, atom)
-        if (opts.verbose) then
-            ui.task_notify(key)
-        end
-        return utils.await(function(resume)
-            exec(atom,
-                -- on_success
-                function(time, stdout)
-                    ui.atom_success(key, time, opts.verbose and stdout or nil)
-                    resume(true)
-                end,
-                -- on_failure
-                function(time, code, stderr)
-                    ui.atom_failure(key, time, code, stderr)
-                    resume(false)
-                end,
-                -- on_error
-                function(what)
-                    ui.atom_error(key, what)
-                    resume(false)
-                end)
-        end)
-    end
+	---Execute an Atom and trigger UI alerts
+	---@param key string Atom name
+	---@param atom dalton.Atom Atom definition
+	---@return boolean success True if process completed successfully
+	local run = function(key, atom)
+		ui.task_notify(key)
+		return utils.await(function(resume)
+			exec(
+				atom,
+				-- on_success
+				function(time, stdout)
+					ui.atom_success(key, time, opts.verbose and stdout or nil)
+					resume(true)
+				end,
+				-- on_failure
+				function(time, code, stderr)
+					ui.atom_failure(key, time, code, stderr)
+					resume(false)
+				end,
+				-- on_error
+				function(what)
+					ui.atom_error(key, what)
+					resume(false)
+				end
+			)
+		end)
+	end
 
-    -- Run async to avoid commands to block nvim
-    utils.async(function()
-        -- Get task and check that it exists
-        local task = get(name)
-        if (task == nil) then
-            error("No such task `" .. name .. "`")
-        end
+	-- Run async to avoid commands to block nvim
+	utils.async(function()
+		-- Get task and check that it exists
+		local task = get(name)
+		if task == nil then
+			error("No such task `" .. name .. "`")
+		end
 
-        -- Run the actual atom
-        if filters.is_atom(task) then
-            ---@cast task dalton.Atom
-            run(name, task)
-        elseif filters.is_compound(task) then
-            ---@cast task dalton.Compound
-            local stime = vim.uv.now()
-            local err = false
-            -- For each Atom in steps (important to keep it in order)
-            for _, atom_name in ipairs(task.steps) do
-                -- Get task and cast it to Atom
-                local atom = get(atom_name)
-                ---@cast atom dalton.Atom
-                if (atom == nil or (not filters.is_atom(atom))) then
-                    error("Compound `" .. name .. "` references an invalid task `" .. atom_name .. "`")
-                end
-                -- Run single atom
-                local success = run(atom_name, atom)
-                if ((not success) and task.bail) then
-                    local delta = vim.uv.now() - stime
-                    ui.compound_failure(name, delta, atom_name)
-                    break -- Stop execution
-                end
-            end
-            -- Show results
-            if (not err) then
-                local delta = vim.uv.now() - stime
-                ui.compound_success(name, delta, #task.steps)
-            end
-        end
-    end)
+		-- Run the actual atom
+		if filters.is_atom(task) then
+			---@cast task dalton.Atom
+			run(name, task)
+		elseif filters.is_compound(task) then
+			---@cast task dalton.Compound
+			local stime = vim.uv.now()
+			local err = false
+			-- For each Atom in steps (important to keep it in order)
+			for _, atom_name in ipairs(task.steps) do
+				-- Get task and cast it to Atom
+				local atom = get(atom_name)
+				---@cast atom dalton.Atom
+				if atom == nil or (not filters.is_atom(atom)) then
+					error("Compound `" .. name .. "` references an invalid task `" .. atom_name .. "`")
+				end
+				-- Run single atom
+				local success = run(atom_name, atom)
+				if (not success) and task.bail then
+					local delta = vim.uv.now() - stime
+					ui.compound_failure(name, delta, atom_name)
+					break -- Stop execution
+				end
+			end
+			-- Show results
+			if not err then
+				local delta = vim.uv.now() - stime
+				ui.compound_success(name, delta, #task.steps)
+			end
+		end
+	end)
 end
 
 --- Pick a task to run
@@ -271,20 +274,20 @@ end
 ---     Choose which tasks are going to be shown, if nil use 'default'
 --- @param opts dalton.run.Opts? Run options
 function M.pick(mode, opts)
-    local utils = require("dalton._core.utils")
-    utils.async(function()
-        local tasks = M.list(mode)
-        -- Await results
-        local key = utils.await(function(resume)
-            require("dalton._core.ui").pick(tasks, function(item)
-                resume(item)
-            end)
-        end)
-        -- User might not have selected anything
-        if (key) then
-            M.run(key, opts)
-        end
-    end)
+	local utils = require("dalton._core.utils")
+	utils.async(function()
+		local tasks = M.list(mode)
+		-- Await results
+		local key = utils.await(function(resume)
+			require("dalton._core.ui").pick(tasks, function(item)
+				resume(item)
+			end)
+		end)
+		-- User might not have selected anything
+		if key then
+			M.run(key, opts)
+		end
+	end)
 end
 
 return M
